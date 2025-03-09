@@ -2,8 +2,11 @@ import { DynamicModule, Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import * as admin from 'firebase-admin';
 import { FirebaseService } from './firebase.config.service';
+import { CommonModule } from '@common';
+import { CommonService } from '@common/common.service';
 
 @Module({
+    imports: [CommonModule.forRootAsync()],
     providers: [
         {
             provide: 'FIREBASE_ADMIN',
@@ -28,7 +31,8 @@ import { FirebaseService } from './firebase.config.service';
             },
             inject: [ConfigService],
         },
-        FirebaseService
+        FirebaseService,
+        CommonService
     ],
     exports: ['FIREBASE_ADMIN', FirebaseService],
 })

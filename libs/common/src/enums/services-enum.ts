@@ -4,7 +4,8 @@ export enum svcList {
 export enum collection {
     USER = "User",
     SESSION = "Session",
-    OTP = "OTP"
+    OTP = "OTP",
+    NOTIFICATION="Notification"
 }
 export enum RoleList {
     ADMIN = "ADMIN",
