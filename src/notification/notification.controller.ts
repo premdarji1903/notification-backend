@@ -1,4 +1,4 @@
-import { Controller, Post, Body, Res, HttpStatus } from '@nestjs/common';
+import { Controller, Post, Body, Res, HttpStatus, Get } from '@nestjs/common';
 import { NotificationService } from './notification.service';
 import { SaveNotificationData } from './dto/save-notificationd-request-dto';
 import { Role, RoleEnum } from '@common';
@@ -35,6 +35,24 @@ export class NotificationController {
       }
 
       return res.json({ status: HttpStatus.OK, err: [], message: "Notification Sent SuccessFully" })
+
+    }
+    catch (err) {
+      return res.json({ status: HttpStatus.INTERNAL_SERVER_ERROR, err: [err?.message] })
+    }
+  }
+
+  // @Role(RoleEnum.ADMIN)
+  @Get('/get-notifications')
+  async getNotification(@Res() res: Response) {
+    try {
+      const result = await this.notificationService.getNotificationData()
+
+      if (!result?.length) {
+        return res.json({ status: HttpStatus.NOT_FOUND, data: [], message: "Notification Data Not Found" })
+      }
+
+      return res.json({ status: HttpStatus.OK, data: result, message: "Notification Data Found SuccessFully" })
 
     }
     catch (err) {
