@@ -1,8 +1,8 @@
-import { HttpStatus, Injectable } from '@nestjs/common';
+import { HttpStatus, Injectable, Logger } from '@nestjs/common';
 import { FirebaseService } from 'src/config/firebase.config.service';
 import { SaveNotificationData } from './dto/save-notificationd-request-dto';
 import { cb, collection, RoleEnum, svcList } from '@common';
-import { getAdminUserDetails, getUserDretails, updateToken } from './shadowSQL';
+import { getAdminUserDetails, getNotificationData, getUserDretails, updateToken } from './shadowSQL';
 import { QueryResult } from 'couchbase';
 import { SendNotificationDTO } from './dto/send-notification-dto';
 
@@ -61,13 +61,34 @@ export class NotificationService {
       getAdminUserDetail = getAdminUserDetail?.rows[0]?.token
 
       const notifications: any = await this.fireBaseService.sendNotification(getAdminUserDetail, payload?.userName, payload?.userId)
-      if (notifications?.successCount > 0) {
-        return true
+
+      if (!notifications) {
+        return false
       }
-      return false
+      return true
     } catch (error) {
-      console.error('Error sending notification:', error);
-      return { success: false, error: error.message };
+      Logger.error('Error sending notification:', error);
+      return false
+    }
+  }
+
+  async getNotificationData() {
+    try {
+      const notificationSHB = await this.shb({
+        bucketName: svcList.AUTH_SVC,
+        scopeName: collection.USER
+      })
+      let notificationData = await notificationSHB.query(getNotificationData(collection.NOTIFICATION))
+      notificationData = notificationData?.rows
+      if (!notificationData?.length) {
+        return []
+      }
+
+      return notificationData
+    }
+    catch (err) {
+      Logger.error('Error get notification -------->', err);
+      return false
     }
   }
 }

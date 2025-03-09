@@ -1,14 +1,12 @@
 import { Logger } from '@nestjs/common';
-import { Cluster } from 'couchbase';
 import * as couchbase from "couchbase"
 
 export const couchBaseFunctions = async (bucketName: string, scopeName: string) => {
     const clusterConnStr: string | any = process.env.COUCHBASE_URL;
     const username: string | any = process.env.CB_USERNAME;
     const password: string | any = process.env.PASSWORD;
-    let cluster: Cluster;
     try {
-        cluster = await couchbase.connect(clusterConnStr, {
+        const cluster = await couchbase.connect(clusterConnStr, {
             username: username,
             password: password,
         });
