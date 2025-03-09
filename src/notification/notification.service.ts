@@ -2,8 +2,9 @@ import { HttpStatus, Injectable } from '@nestjs/common';
 import { FirebaseService } from 'src/config/firebase.config.service';
 import { SaveNotificationData } from './dto/save-notificationd-request-dto';
 import { cb, collection, RoleEnum, svcList } from '@common';
-import { getUserDretails, updateToken } from './shadowSQL';
+import { getAdminUserDetails, getUserDretails, updateToken } from './shadowSQL';
 import { QueryResult } from 'couchbase';
+import { SendNotificationDTO } from './dto/send-notification-dto';
 
 @Injectable()
 export class NotificationService {
@@ -26,12 +27,12 @@ export class NotificationService {
       getUserData = getUserData?.rows[0]?.User
 
       if (!getUserData || getUserData?.role < RoleEnum.ADMIN) {
-        return { data: [], status: HttpStatus.CONFLICT, err: [], message: "User Not Found" }
+        return false
       }
-      let tokens = getUserData?.tokens ?? []
+      let tokens = getUserData?.token?.length ? getUserData?.token : []
       tokens.push(payload?.token)
-
       tokens = [...new Set(tokens)]
+
       if (!tokens.length) {
         return false
       }
@@ -48,12 +49,22 @@ export class NotificationService {
   }
 
   // 🔹 Send a Notification
-  async sendNotification(fcmToken: string, title: string, body: string) {
+  async sendNotification(payload: SendNotificationDTO) {
     try {
-      const notifications: any = await this.fireBaseService.sendNotification(fcmToken, title, body)
+
+      const userSHB = await this.shb({
+        bucketName: svcList.AUTH_SVC,
+        scopeName: collection.USER
+      })
+
+      let getAdminUserDetail = await userSHB.query(getAdminUserDetails(collection.USER))
+      getAdminUserDetail = getAdminUserDetail?.rows[0]?.token
+
+      const notifications: any = await this.fireBaseService.sendNotification(getAdminUserDetail, payload?.userName, payload?.userId)
       if (notifications?.successCount > 0) {
-        return { success: true, message: 'Notification sent' };
+        return true
       }
+      return false
     } catch (error) {
       console.error('Error sending notification:', error);
       return { success: false, error: error.message };
