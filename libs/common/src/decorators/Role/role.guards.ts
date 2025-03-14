@@ -19,13 +19,12 @@ export class RoleGuards implements CanActivate {
         try {
             const roles: number[] = this.reflector.get<number[]>('Role', context.getHandler());
 
-            if (!roles.length || roles[0] < RoleEnum.ADMIN) {
+            if (!roles.length) {
                 throw new ForbiddenException('You are not allowed to make this request');
             }
 
             const request = context.switchToHttp().getRequest();
             const authHeader = request.headers['authorization']; // Get Authorization header
-
             if (!authHeader) {
                 throw new ForbiddenException('Authorization header missing');
             }
@@ -39,12 +38,18 @@ export class RoleGuards implements CanActivate {
                 bucketName: svcList.AUTH_SVC,
                 scopeName: collection.USER,
             });
-            let findSessionData: QueryResult = await sessionSHB.query(`SELECT id,userId FROM Session WHERE META().id like "${collection.SESSION}::${token}%" `);
+            let findSessionData: any = await sessionSHB.query(`SELECT id,userId,\`role\` FROM Session WHERE META().id like "${collection.SESSION}::${token}%" `);
 
             findSessionData = findSessionData?.rows[0]
+
             if (!findSessionData) {
                 throw new ForbiddenException('Your session is expired');
             }
+
+            if (findSessionData?.role < roles[0]) {
+                throw new ForbiddenException('Your are not allowed to hit this api');
+            }
+
             else {
                 return true;
             }

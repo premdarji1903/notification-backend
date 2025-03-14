@@ -42,7 +42,7 @@ export class NotificationController {
     }
   }
 
-  // @Role(RoleEnum.ADMIN)
+  @Role(RoleEnum.ADMIN)
   @Get('/get-notifications')
   async getNotification(@Res() res: Response) {
     try {
